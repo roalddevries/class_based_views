@@ -10,6 +10,9 @@ class FormError(Exception):
 class View(HttpResponse):
     __metaclass__ = ABCMeta
 
+    context_processors = []
+    context_dict       = {}
+
     def __init__(self, request, *args, **kwargs):
         self.request     = request
         self.view_args   = args
@@ -24,7 +27,7 @@ class View(HttpResponse):
             else:
                 super(View, self).__init__()
                 self.status_code = 302 # redirect
-                self['Location'] = self.next_page()
+                self['Location'] = self.next_page
 
     def is_constant(self):
         return self.request.method == 'GET'
@@ -37,10 +40,7 @@ class View(HttpResponse):
 
     def context(self):
         if self.context_processors:
-            return RequestContext(self.request, self.context_dict(), processors=self.context_processors)
+            return RequestContext(self.request, self.context_dict, processors=self.context_processors)
         else:
-            return Context(self.context_dict())
-
-    def context_dict(self):
-        return {}
+            return Context(self.context_dict)
 
