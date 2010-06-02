@@ -1,4 +1,5 @@
 from abc import ABCMeta
+from django import forms
 from django.http import HttpResponse
 from django.template import loader, Context, RequestContext
 
@@ -18,8 +19,8 @@ class View(HttpResponse):
     '''
     __metaclass__ = ABCMeta
 
+    Form               = None
     context_processors = []
-    context_dict       = {}
 
     def __init__(self, request, *args, **kwargs):
         self.request     = request
@@ -52,7 +53,24 @@ class View(HttpResponse):
         else:
             return Context(self.context_dict)
 
+    def context_dict(self):
+        return {'form': self.form()} if self.Form else {}
+
+    def object(self):
+        return None
+
+    def form(self):
+        if not hasattr(self, '_form'):
+            args = [] if self.is_constant() else [self.request.POST, self.request.FILES]
+            kwargs = {'instance': self.object()} if self.object() else {}
+            self._form = self.Form(*args, **kwargs)
+        return self._form
+
     def process(self):
-        '''Process POST data, and throw a FormError if it doesn't succeed'''
-        raise FormError
+        '''Process POST data, and throw a FormError if it isn't valid'''
+        if self.form().is_valid():
+            if isinstance(self.form(), forms.ModelForm):
+                self.form().save()
+        else:
+            raise FormError
 
