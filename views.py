@@ -8,6 +8,14 @@ class FormError(Exception):
 
 
 class View(HttpResponse):
+    '''A base class for django views
+
+    For constant views (that don't change the state of the model), combines a
+    template and a context into a response.
+
+    For non-constant views, processes POST data, and if it succeeds redirects
+    to a next page.
+    '''
     __metaclass__ = ABCMeta
 
     context_processors = []
@@ -43,4 +51,8 @@ class View(HttpResponse):
             return RequestContext(self.request, self.context_dict, processors=self.context_processors)
         else:
             return Context(self.context_dict)
+
+    def process(self):
+        '''Process POST data, and throw a FormError if it doesn't succeed'''
+        raise FormError
 
